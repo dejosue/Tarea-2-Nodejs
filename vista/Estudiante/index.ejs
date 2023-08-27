@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Estudiantes y tipo de sangre</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-dark">
+  <main class="flex-grow-1">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-black">
+      <div class="container">
+        <a class="navbar-brand">Colegio </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <button type="button" class="btn btn-primary" id="openModalBtn">
+                Agregar nuevo estudiante
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <!-- TABLA -->
+    <section class="my-1 mx-3">
+      <table class="table table-hover table-striped table-dark">
+        <thead>
+          <tr class="">
+            <th>Carné</th>
+            <th>Nombres</th>
+            <th>Apellidos</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Tipo de Sangre</th>
+            <th>Correo Electrónico</th>
+            <th>Fecha de Nacimiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% estudiantes.forEach((estudiante, index)=> { %>
+            <tr data-estudiante='<%= JSON.stringify(estudiante) %>' class="selectable-row" data-index="<%= index %>">
+              <td><%= estudiante.carne %></td>
+              <td><%= estudiante.nombres %></td>
+              <td><%= estudiante.apellidos %></td>
+              <td><%= estudiante.direccion %></td>
+              <td><%= estudiante.telefono %></td>
+              <td><%= estudiante.sangre %></td>
+              <td><%= estudiante.correo_electronico %></td>
+              <td><%= estudiante.fecha_nacimiento.toLocaleDateString('es-ES', { year: 'numeric' , month: 'short' ,    day: 'numeric' }) %></td>
+            </tr>
+            <% }); %>
+        </tbody>
+      </table>
+    </section>
+    <!-- Modal -->
+    <section>
+      <div id="modalDetalle" class="modal" style="background-color: rgba(0,0,0, 0.4);">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+              <h5 class="modal-title " id="tituloAdd">Agregar estudiante</h5>
+              <button type="button" id="cerrarDialogButton" class="btn-close" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-white bg-secondary">
+              <div id="modalContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const openModalBtn = document.getElementById('openModalBtn');
+      const modal = document.getElementById('modalDetalle');
+      const cerrarDialogButton = document.getElementById('cerrarDialogButton')
+      const modalContent = document.getElementById('modalContent');
+      const selectableRows = document.querySelectorAll('.selectable-row');
+
+      // Evento para abrir el modal con el formulario
+      openModalBtn.addEventListener('click', async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/add`);
+          const addFormContent = await response.text();
+          modalContent.innerHTML = addFormContent;
+          const titulo = document.getElementById('tituloAdd');
+          titulo.textContent = 'Agregar Estudiante';
+          modal.style.display = 'block';
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      cerrarDialogButton.addEventListener('click', (event) => {
+        if (event.target === cerrarDialogButton) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // Evento para mostrar los detalles del estudiante en el modal al hacer clic en una fila
+      selectableRows.forEach(row => {
+        row.addEventListener('click', async () => {
+          const response = await fetch(`http://localhost:5000/add`);
+          const addFormContent = await response.text();
+          modalContent.innerHTML = addFormContent;
+          const estudianteData = row.getAttribute('data-estudiante');
+          const estudiante = JSON.parse(estudianteData);
+
+          // Obtén los campos del formulario
+          const idEstudianteInput = document.querySelector('#modalDetalle [name="id_estudiante"]');
+          const carneInput = document.querySelector('#modalDetalle [name="carne"]');
+          const nombresInput = document.querySelector('#modalDetalle [name="nombres"]');
+          const apellidosInput = document.querySelector('#modalDetalle [name="apellidos"]');
+          const direccionInput = document.querySelector('#modalDetalle [name="direccion"]');
+          const telefonoInput = document.querySelector('#modalDetalle [name="telefono"]');
+          const correoInput = document.querySelector('#modalDetalle [name="correo_electronico"]');
+          const tipoSangreInput = document.querySelector('#modalDetalle [name="id_tipo_sangre"]');
+          const fechaNacimientoInput = document.querySelector('#modalDetalle [name="fecha_nacimiento"]');
+
+          // Llena los valores en los campos del formulario
+          idEstudianteInput.value = estudiante.id_estudiante;
+          carneInput.value = estudiante.carne;
+          nombresInput.value = estudiante.nombres;
+          apellidosInput.value = estudiante.apellidos;
+          direccionInput.value = estudiante.direccion;
+          telefonoInput.value = estudiante.telefono;
+          correoInput.value = estudiante.correo_electronico;
+          const tipoSangreOptions = tipoSangreInput.options;
+          for (let i = 0; i < tipoSangreOptions.length; i++) {
+            if (tipoSangreOptions[i].value === estudiante.id_tipo_sangre.toString()) {
+              tipoSangreOptions[i].selected = true;
+              break;
+            }
+          }
+          const fechaNacimiento = new Date(estudiante.fecha_nacimiento);
+          fechaNacimientoInput.value = fechaNacimiento.toISOString().split('T')[0];
+          modal.style.display = 'block';
+
+          const titulo = document.getElementById('tituloAdd');
+          titulo.textContent = 'Editar Estudiante';
+
+          const spaceForButton = document.getElementById('space-for-button');
+          //BOTON DE ACTUALIZAR
+          const updateButton = document.createElement('button');
+          updateButton.type = 'submit';
+          updateButton.textContent = 'Actualizar';
+          updateButton.setAttribute('name', 'update');
+          updateButton.setAttribute('value', 'true');
+          updateButton.setAttribute('class', 'btn btn-info ')
+          //BOTON DE ELIMINAR
+          const deleteButton = document.createElement('button');
+          deleteButton.type = 'submit';
+          deleteButton.textContent = 'Eliminar estudiante';
+          deleteButton.setAttribute('name', 'delete');
+          deleteButton.setAttribute('value', 'true');
+          deleteButton.setAttribute('class', 'btn btn-danger');
+          deleteButton.addEventListener('click', () => {
+            const confirmDelete = window.confirm('¿seguro que deseas eliminarlo?');
+            if (confirmDelete) {
+              const form = document.querySelector('#modalDetalle form');
+              form.submit();
+              modal.style.display = 'none';              
+            } else {
+              event.preventDefault();
+            }
+          });
+          spaceForButton.innerHTML = '';
+          spaceForButton.appendChild(updateButton);
+          spaceForButton.appendChild(deleteButton);
+          spaceForButton.setAttribute('class', 'd-grid gap-4 col-12 mx-auto px-3')
+
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
